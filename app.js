@@ -78,6 +78,35 @@ app.delete('/api/envelopes/:id',(req,res,next)=>{
   res.status(404).send(envelopes)
 })
 
+app.post('/api/envelopes/:fromId/transfer/:toId',(req,res,next)=>{
+  try {
+		const { fromId, toId } = req.params;
+		const { amount } = req.body
+
+		const originEnv = findById(envelopes, fromId);
+		const destinationEnv = findById(envelopes, toId);
+
+    if (!originEnv || !destinationEnv) {
+      return res.status(404).send({
+        message: "Envelope Not Found",
+      });
+		}
+
+		if (originEnv.budget < amount) {
+			return res.status(400).send({
+				message: "Amount to transfer exceeds envelope budget funds"
+			})
+		}
+
+		originEnv.budget -= amount;
+		destinationEnv.budget += amount;
+
+		return res.status(201).send(originEnv);
+	} catch (err) {
+		res.status(500).send(err);
+	}
+})
+
   app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
 })
@@ -91,3 +120,11 @@ const createId=(data)=>{
   }
   return newId;
 };
+const findById=(data, recordId)=>{
+  const record = data.find((item) => item.id === parseInt(recordId));
+
+  if (!record) {
+    console.log("Record not found");
+  }
+  return record;
+}
