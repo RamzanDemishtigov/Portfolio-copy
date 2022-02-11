@@ -71,6 +71,13 @@ app.post('/api/envelopes',(req, res) => {
     }
   });
 
+app.delete('/api/envelopes/:id',(req,res,next)=>{
+  const index=req.params.id-1;
+  envelopes.splice(index,1)
+  budgetChecker()
+  res.status(404).send(envelopes)
+})
+
   app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
 })
