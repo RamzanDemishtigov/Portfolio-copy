@@ -1,8 +1,9 @@
-
 const express = require('express');
 const res = require('express/lib/response');
-const app = express()
-const port = 3000
+const app = express();
+const bodyParser = require('body-parser')
+const port = 3000;
+const db = require('./queries')
 //Envelopes
 const envelopes=[{
     id:1,
@@ -29,15 +30,18 @@ const budgetChecker=()=>{
   console.log(totalBudget)
 }
 
-budgetChecker()
+app.use(bodyParser.json())
+app.use(
+  bodyParser.urlencoded({
+    extended: true,
+  })
+)
 
 app.get('/', (req, res) => {
-  res.send('Hello World!')
+  res.json({ info: 'Node.js, Express, and Postgres API' })
 })
 
-app.get('/api/envelopes',(req,res,next)=>{
-  res.status(200).send(envelopes)
-});
+app.get('/api/envelopes',db.getEnvelopes);
 
 app.get('/api/envelopes/:id',(req,res,next)=>{
   const index=req.params.id
