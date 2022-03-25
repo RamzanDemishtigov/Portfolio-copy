@@ -1,3 +1,6 @@
+const { response } = require('express');
+const { request } = require('express');
+
 const Pool = require('pg').Pool;
 const pool = new Pool({
   user: 'postgres',
@@ -37,7 +40,7 @@ const createEnvelope = (request, response) => {
       if (error) {
         throw error;
       }
-      response.status(201).send(`Envelope added with ID: ${result.insertId}`);
+      response.status(201).send(`Envelope added with ID: ${results.insertId}`);
     }
   );
 };
@@ -64,10 +67,37 @@ const deleteEnvelope = (request, response) => {
     response.status(200).send(`Envelope deleted with ID: ${id}`);
   });
 };
+
+const transaction = (request,response) => {
+  const id = parseInt(request.params.id);
+  const {toId,amount} = request.body;
+  const date = new Date();
+  
+  pool.query('UPDATE envelopes SET budget = budget - $2 WHERE id = $1 RETURNING *',[id,amount],(error, results) => {
+    if (error) {
+      throw error;
+    }
+    response.status(200).send();
+  });
+  pool.query('UPDATE envelopes SET budget = budget + $2 WHERE id = $1 RETURNING *',[toId,amount],(error, results) => {
+    if (error) {
+      throw error;
+    }
+    response.status(200).send();
+  });
+  pool.query('INSERT INTO transactions(amount,recipient,sender,date) VALUES ($1,$2,$3,$4) RETURNING *',[amount,toId,id,date],(error, results) => {
+    if (error) {
+      throw error;
+    }
+    response.status(200).send();
+  });
+}
+
 module.exports = {
   getEnvelopes,
   getEnvelopeById,
   createEnvelope,
   updateEnvelope,
   deleteEnvelope,
+  transaction
 };
